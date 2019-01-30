@@ -1,0 +1,56 @@
+  /signup:
+    post:
+      tags:
+        - LTI
+        - signup
+      summary: Sign up an LTI user
+      description: |
+        Sign up an LTI user
+        ##### Permissions
+        No permission required but user creation can be controlled by server configuration.
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            required:
+              - password
+            properties:
+              password:
+                type: string
+                description: The password to create user with
+      responses:
+        '302':
+          description: User signed up successfully. Redirecting to specified channel.
+        '400':
+          $ref: '#/responses/BadRequest'
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+
+    /login/lti:
+      post:
+        tags:
+          - LTI
+          - login
+        summary: Login as an LTI user from an LMS
+        description: |
+          Login as an LTI user from an LMS.
+          ##### Permissions
+          No permission required but user creation can be controlled by server configuration.
+        parameters:
+          - name: launchData
+            in: formData
+            description: the launch data from an LMS
+            required: true
+        responses:
+          '302':
+            description: Login was not rejected. Redirects to eithers specified channel, or the LTI signup page.
+          '400':
+            $ref: '#/responses/BadRequest'
+          '401':
+            $ref: '#/responses/Unauthorized'
+          '403':
+            $ref: '#/responses/Forbidden'
