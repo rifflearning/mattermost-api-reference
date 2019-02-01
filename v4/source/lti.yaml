@@ -1,16 +1,16 @@
-  /signup:
+  '/lti/signup':
     post:
       tags:
-        - LTI
-        - signup
+      - LTI
       summary: Sign up an LTI user
       description: |
-        Sign up an LTI user
+        Sign up an LTI user. Password is required for email login.
         ##### Permissions
         No permission required but user creation can be controlled by server configuration.
       parameters:
         - in: body
           name: body
+          description: Details of the LTI user to be created
           required: true
           schema:
             type: object
@@ -18,39 +18,129 @@
               - password
             properties:
               password:
+                description: The password used for email authentication.
                 type: string
-                description: The password to create user with
+        - in: header
+          type: array
+          name: Cookie
+          required: true
+          items:
+            type: string
+          description: |
+            Base64 encoded LTI launch data cookie.
+            E.g.: MMLTILAUNCHDATA=abcde12345; Path=/
       responses:
-        '302':
-          description: User signed up successfully. Redirecting to specified channel.
+        '200':
+          description: User creation successful. Login successful. Redirect to specified channel.
+          schema:
+            type: object
+            properties:
+              redirect:
+                description: The URL to redirect the logged in user to.
+                type: string
         '400':
           $ref: '#/responses/BadRequest'
-        '401':
-          $ref: '#/responses/Unauthorized'
-        '403':
-          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '500':
+          $ref: '#/responses/InternalServerError'
+        '501':
+          $ref: '#/responses/NotImplemented'
 
-    /login/lti:
-      post:
-        tags:
-          - LTI
-          - login
-        summary: Login as an LTI user from an LMS
-        description: |
-          Login as an LTI user from an LMS.
-          ##### Permissions
-          No permission required but user creation can be controlled by server configuration.
-        parameters:
-          - name: launchData
-            in: formData
-            description: the launch data from an LMS
-            required: true
-        responses:
-          '302':
-            description: Login was not rejected. Redirects to eithers specified channel, or the LTI signup page.
-          '400':
-            $ref: '#/responses/BadRequest'
-          '401':
-            $ref: '#/responses/Unauthorized'
-          '403':
-            $ref: '#/responses/Forbidden'
+  '/login/lti':
+    post:
+      tags:
+      - LTI
+      summary: Login as an LTI user from an LMS
+      consumes:
+        - application/x-www-form-urlencoded
+      description: |
+        Login as an LTI user from an LMS.
+        ##### Permissions
+        No permission required but user creation can be controlled by server configuration.
+      parameters:
+        - in: body
+          name: LaunchData
+          schema:
+            type: object
+            required:
+              - oauth_consumer_key
+              - oauth_signature_method
+              - oauth_signature
+              - lis_person_contact_email_primary
+              - lis_person_sourcedid
+              - lis_person_name_given
+              - lis_person_name_family
+              - custom_user_id
+              - context_id
+            properties:
+              oauth_consumer_key:
+                description: Consumer Key used to sign the LTI request.
+                type: string
+              oauth_signature_method:
+                description: The signature method used to sign the LTI request. Must have value "HMAC-SHA1".
+                type: string
+                enum: [HMAC-SHA1]
+              oauth_signature:
+                description: The OAuth signature of the LTI request.
+                type: string
+              roles:
+                description: The roles of the user in LMS. Used to populate the position field of the user in mattermost.
+                type: string
+              custom_channel_redirect:
+                description: The lookup key or the channel-name to redirect the user to.
+                type: string
+              context_id:
+                description: The context id mapped to a mattermost team.
+                type: string
+              custom_cohort_id:
+                description: The channel name for the LMS cohort channel.
+                type: string
+              custom_cohort_name:
+                description: The channel display name of the LMS cohort channel.
+                type: string
+              custom_team_id:
+                description: The channel name of the LMS team channel.
+                type: string
+              custom_team_name:
+                description: The channel display name of the LMS team channel.
+                type: string
+              lis_person_name_full:
+                description: The full name of the LMS user.
+                type: string
+              lis_person_contact_email_primary:
+                description: The email of the LMS user.
+                type: string
+              lis_person_sourcedid:
+                description: The username of the LMS user.
+                type: string
+              lis_person_name_given:
+                description: The first name of the LMS user.
+                type: string
+              lis_person_name_family:
+                description: The last name of the LMS user.
+                type: string
+              custom_user_id:
+                description: The User ID of the LMS user.
+                type: string
+          description: LTI launch data from an LMS
+          required: true
+      responses:
+        '302':
+          description: |
+            Redirects to the specified channel if login is successful.
+            Redirects to the LTI signup page if a matching user account is not found.
+          headers:
+            Set-Cookie:
+              description: |
+                Base64 encoded launch data cookie.
+                E.g.: MMLTILAUNCHDATA=abcde12345; Path=/
+              type: string
+        '400':
+          $ref: '#/responses/BadRequest'
+        '404':
+          $ref: '#/responses/NotFound'
+        '500':
+          $ref: '#/responses/InternalServerError'
+        '501':
+          $ref: '#/responses/NotImplemented'
