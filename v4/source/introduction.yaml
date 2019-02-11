@@ -361,6 +361,8 @@ tags:
     description: Endpoints for configuring and interacting with SAML.
   - name: LDAP
     description: Endpoints for configuring and interacting with LDAP.
+  - name: LTI
+    description: Endpoints for configuring and interacting with LTI.
   - name: compliance
     description: Endpoints for creating, getting and downloading compliance reports.
   - name: cluster
@@ -411,6 +413,7 @@ x-tagGroups:
       - OAuth
       - SAML
       - LDAP
+      - LTI
       - compliance
       - cluster
       - elasticsearch
